@@ -20,6 +20,7 @@ from vocode.streaming.streaming_conversation import StreamingConversation
 from vocode.streaming.transcriber.deepgram_transcriber import DeepgramTranscriber
 from vocode.streaming.synthesizer.cartesia_synthesizer import CartesiaSynthesizer
 from vocode.streaming.models.synthesizer import CartesiaSynthesizerConfig
+from vocode.streaming.models.audio import AudioEncoding
 
 # Get API keys
 load_dotenv()
@@ -84,6 +85,8 @@ async def main():
         microphone_input,
         speaker_output,
     ) = create_streaming_microphone_input_and_speaker_output(
+        mic_sampling_rate=48000,
+        speaker_sampling_rate=48000,
         use_default_devices=False,
     )
 
@@ -105,7 +108,7 @@ async def main():
 
 {article_content}  
 
-Your task is to help the user concisely understand and learn from this article. THESE RESPONSES SHOULD BE ONLY A FEW SENTENCES AND CONCISE. THIS IS IMPORTANT. If asked about something not covered in the article, inform the user that the information is not present in the given content.""",
+Your task is to help the user concisely understand and learn from this article. THESE RESPONSES SHOULD BE ONLY 2-3 SENTENCES AND CONCISE. THIS INSTRUCTION IS IMPORTANT. If asked about something not covered in the article, inform the user that the information is not present in the given content.""",
             )
         ),
         synthesizer=CartesiaSynthesizer(
