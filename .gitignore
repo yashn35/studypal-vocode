@@ -1,0 +1,6 @@
+config.py
+extracted_content.txt
+.env
+myenv
+new_myenv
+__pycache__
