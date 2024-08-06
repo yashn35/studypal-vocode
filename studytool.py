@@ -90,14 +90,13 @@ async def main():
                 api_key=deepgram_api_key,
             ),
         ),
-        # {article_content[:6000]}
         agent=ChatGPTAgent(
             ChatGPTAgentConfig(
                 openai_api_key=openai_api_key,
                 initial_message=BaseMessage(text="Hi! I'm ready to discuss the article with you. What would you like to learn about?"),
                 prompt_preamble=f"""You are an AI study partner. You have been given the following article content:
 
-{article_content}  # Limit content to avoid exceeding token limits
+{article_content}  
 
 Your task is to help the user concisely understand and learn from this article. THESE RESPONSES SHOULD BE ONLY A FEW SENTENCES AND CONCISE. THIS IS IMPORTANT. If asked about something not covered in the article, inform the user that the information is not present in the given content.""",
             )
