@@ -6,6 +6,7 @@ import requests
 import os
 import io
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from vocode.helpers import create_streaming_microphone_input_and_speaker_output
 from vocode.streaming.agent.chat_gpt_agent import ChatGPTAgent
@@ -19,7 +20,13 @@ from vocode.streaming.streaming_conversation import StreamingConversation
 from vocode.streaming.transcriber.deepgram_transcriber import DeepgramTranscriber
 from vocode.streaming.synthesizer.cartesia_synthesizer import CartesiaSynthesizer
 from vocode.streaming.models.synthesizer import CartesiaSynthesizerConfig
-from config import openai_api_key, deepgram_api_key, cartesia_api_key
+
+# Get API keys
+load_dotenv()
+
+openai_api_key = os.getenv('OPENAI_API_KEY')
+deepgram_api_key = os.getenv('DEEPGRAM_API_KEY')
+cartesia_api_key = os.getenv('CARTESIA_API_KEY')
 
 
 def get_article_content(url):
