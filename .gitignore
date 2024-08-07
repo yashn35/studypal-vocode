@@ -2,3 +2,4 @@ extracted_content.txt
 .env
 cartesia
 __pycache__
+.DS_Store
