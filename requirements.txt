@@ -48,7 +48,6 @@ mdurl==0.1.2
 miniaudio==1.61
 multidict==6.0.5
 nltk==3.8.1
-numpy==1.26.4
 openai==1.39.0
 opentelemetry-api==1.26.0
 opentelemetry-sdk==1.26.0

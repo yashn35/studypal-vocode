@@ -21,6 +21,8 @@ from vocode.streaming.transcriber.deepgram_transcriber import DeepgramTranscribe
 from vocode.streaming.synthesizer.cartesia_synthesizer import CartesiaSynthesizer
 from vocode.streaming.models.synthesizer import CartesiaSynthesizerConfig
 from vocode.streaming.models.audio import AudioEncoding
+from vocode.logging import configure_pretty_logging
+import tiktoken
 
 # Get API keys
 load_dotenv()
@@ -28,7 +30,6 @@ load_dotenv()
 openai_api_key = os.getenv('OPENAI_API_KEY')
 deepgram_api_key = os.getenv('DEEPGRAM_API_KEY')
 cartesia_api_key = os.getenv('CARTESIA_API_KEY')
-
 
 def get_article_content(url):
     if 'arxiv.org' in url:
@@ -66,6 +67,21 @@ def get_arxiv_content(url):
         return text
     else:
         return "Failed to download arXiv PDF."
+    
+# Count number of tokens used in model
+def num_tokens_from_string(string: str, model_name: str = "gpt-3.5-turbo") -> int:
+    encoding = tiktoken.encoding_for_model(model_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
+
+# Truncate the content
+def truncate_content(content, max_tokens=14000):
+    encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+    tokens = encoding.encode(content)
+    if len(tokens) > max_tokens:
+        truncated_tokens = tokens[:max_tokens]
+        return encoding.decode(truncated_tokens)
+    return content    
 
 # This writes the content locally to your machine so you can see what content is being passed to the agent as context
 def save_content_to_file(content, filename="extracted_content.txt"):
@@ -73,13 +89,17 @@ def save_content_to_file(content, filename="extracted_content.txt"):
         file.write(content)
 
 async def main():
+    configure_pretty_logging() # Add this if you want to see debugging 
+
     url = input("Enter the URL of the article you would like to talk about: ")
     article_content = get_article_content(url)
+    
+    # Truncate content if article too long
+    max_tokens =14000
+    article_content = truncate_content(article_content, max_tokens)
 
+    # Save article to file
     save_content_to_file(article_content)
-
-    print(f"Article content extracted and saved. Press Enter to start the conversation...")
-    input()
 
     (
         microphone_input,
@@ -90,7 +110,7 @@ async def main():
         use_default_devices=False,
     )
 
-    # This uses Vocode to orchestrate the Deepgram transcription, OpenAI LLM, and Cartesia TTS API together 
+    # This uses Vocode to orchestrate everything together 
     conversation = StreamingConversation(
         output_device=speaker_output,
         transcriber=DeepgramTranscriber(
@@ -103,12 +123,12 @@ async def main():
         agent=ChatGPTAgent(
             ChatGPTAgentConfig(
                 openai_api_key=openai_api_key,
-                initial_message=BaseMessage(text="Hi! I'm ready to discuss the article with you. What would you like to learn about?"),
+                initial_message=BaseMessage(text="Hello! I'm ready to discuss the article with you. What would you like to learn about?"),
                 prompt_preamble=f"""You are an AI study partner. You have been given the following article content:
 
 {article_content}  
 
-Your task is to help the user concisely understand and learn from this article. THESE RESPONSES SHOULD BE ONLY 2-3 SENTENCES AND CONCISE. THIS INSTRUCTION IS IMPORTANT. If asked about something not covered in the article, inform the user that the information is not present in the given content.""",
+Your task is to help the user concisely understand and learn from this article. THESE RESPONSES SHOULD BE ONLY 1-3 SENTENCES AND CONCISE. THIS INSTRUCTION IS VERY IMPORTANT. RESPONSES SHOULDN'T BE LONG.""",
             )
         ),
         synthesizer=CartesiaSynthesizer(
@@ -122,7 +142,6 @@ Your task is to help the user concisely understand and learn from this article. 
     )
     
     await conversation.start()
-    print("Conversation started. Speak your questions, and press Ctrl+C to end.")
     signal.signal(signal.SIGINT, lambda _0, _1: asyncio.create_task(conversation.terminate()))
     
     while conversation.is_active():
